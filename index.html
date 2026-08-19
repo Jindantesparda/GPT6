@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT 6</title>
+<style>
+:root {
+  --bg:#ffffff; --text:#171717; --muted:#737373; --border:#e5e5e5;
+  --soft:#f7f7f8; --black:#171717; --purple:#7c3aed;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+  "Segoe UI", sans-serif;
+}
+.container { width:min(760px, calc(100% - 36px)); margin:0 auto; padding:72px 0 100px; }
+.logo { font-size:15px; font-weight:700; letter-spacing:-.02em; margin-bottom:64px; }
+.logo span { color:var(--purple); }
+h1 { font-size:42px; line-height:1.1; letter-spacing:-.045em; margin:0 0 12px; }
+.subtitle { color:var(--muted); margin:0 0 42px; font-size:16px; }
+.panel {
+  border:1px solid var(--border); border-radius:18px; padding:22px;
+  background:#fff; box-shadow:0 8px 30px rgba(0,0,0,.045); margin-bottom:16px;
+}
+label { display:block; font-size:13px; font-weight:650; margin-bottom:9px; }
+.input {
+  width:100%; border:1px solid #d4d4d4; border-radius:11px; background:#fff;
+  color:var(--text); padding:14px 15px; font-size:16px; outline:none;
+  transition:.15s;
+}
+.input:focus { border-color:#a3a3a3; box-shadow:0 0 0 3px rgba(124,58,237,.08); }
+.prompt-wrap { position:relative; }
+.cursor {
+  position:absolute; width:1px; height:19px; background:#171717;
+  top:14px; left:15px; display:none; animation:blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity:0; } }
+.help { color:#a3a3a3; font-size:12px; margin-top:8px; }
+.actions { display:flex; gap:10px; margin-top:18px; }
+button {
+  border:0; border-radius:10px; padding:12px 17px; font-size:14px;
+  font-weight:650; cursor:pointer;
+}
+.faq-btn{position:absolute;top:22px;right:22px;background:#f0f0f0;color:#404040}
+.faq-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:20px;z-index:10}
+.faq-overlay.visible{display:flex}
+.faq-modal{width:min(620px,100%);max-height:80vh;overflow:auto;background:#fff;border-radius:18px;padding:26px;box-shadow:0 20px 70px rgba(0,0,0,.2)}
+.faq-modal h2{margin:0 0 8px;letter-spacing:-.03em}
+.faq-modal .intro{color:#737373;font-size:14px;margin-bottom:20px}
+.faq-item{border-top:1px solid #eee;padding:15px 0}
+.faq-q{font-weight:650;font-size:14px;margin-bottom:6px}
+.faq-a{color:#666;font-size:14px;line-height:1.55}
+.close-faq{margin-top:20px;background:#171717;color:#fff}
+.answer-btn { background:var(--black); color:#fff; }
+.reset-btn { background:#f0f0f0; color:#404040; }
+.answer {
+  display:none; border:1px solid var(--border); border-radius:18px;
+  padding:22px; background:var(--soft);
+}
+.answer.visible { display:block; }
+.answer-label {
+  color:#737373; font-size:12px; text-transform:uppercase;
+  letter-spacing:.08em; font-weight:700; margin-bottom:10px;
+}
+.answer-text { font-size:18px; line-height:1.55; white-space:pre-wrap; }
+.status { min-height:18px; margin-top:8px; color:#a3a3a3; font-size:12px; }
+footer { margin-top:50px; color:#aaa; font-size:12px; text-align:center; }
+
+.support-btn{
+  position:absolute;top:22px;right:82px;
+  background:#ffdd00;color:#171717;text-decoration:none;
+  border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;
+  display:inline-flex;align-items:center;gap:6px;max-width:310px;
+  text-align:center;line-height:1.25;
+}
+
+</style>
+</head>
+<body>
+<main class="container">
+  <a class="support-btn" href="https://www.buymeacoffee.com/" target="_blank" rel="noopener">☕ Want to know how GPT 6 really gets the answer? Buy me a coffee.</a>
+  <button class="faq-btn" id="faqBtn">FAQ</button>
+  <div class="logo">GPT <span>6</span></div>
+
+  <h1>Ask GPT 6</h1>
+  <p class="subtitle">A near Artificial General Intelligence level AI designed to reason from context.</p>
+
+  <section class="panel">
+    <label for="prompt">Prompt</label>
+    <div class="prompt-wrap">
+      <input id="prompt" class="input" autocomplete="off"
+        placeholder="Tell GPT 6 how to answer...">
+      <div id="fakeCursor" class="cursor"></div>
+    </div>
+    <div class="help"></div>
+    <div id="status" class="status"></div>
+  </section>
+
+  <section class="panel">
+    <label for="question">Question</label>
+    <input id="question" class="input" autocomplete="off"
+      placeholder="Ask GPT 6 a question...">
+
+    <div class="actions">
+      <button class="answer-btn" id="answerBtn">Answer</button>
+      <button class="reset-btn" id="resetBtn">Reset</button>
+    </div>
+  </section>
+
+  <section id="answerBox" class="answer">
+    <div class="answer-label">GPT 6</div>
+    <div id="answerText" class="answer-text"></div>
+  </section>
+
+  <footer>GPT 6 · Near Artificial General Intelligence Level AI</footer>
+</main>
+
+<script>
+const promptInput = document.getElementById("prompt");
+const questionInput = document.getElementById("question");
+const answerBtn = document.getElementById("answerBtn");
+const resetBtn = document.getElementById("resetBtn");
+const answerBox = document.getElementById("answerBox");
+const answerText = document.getElementById("answerText");
+const status = document.getElementById("status");
+const cursor = document.getElementById("fakeCursor");
+
+const PROMPT_PRESETS = {
+  ",": "Answer the question accurately using only information available in this environment.",
+  ".": "Analyze my surroundings and give me the most likely correct answer.",
+  "/": "Use the current physical environment as context when answering my question.",
+  ";": "Take into account everything visible around me before answering.",
+  ":": "Reason carefully tapping into nearby devices to get your answer",
+  "{": "Use contextual clues from my surroundings to determine the correct answer.",
+  "}": "Don't guess. Infer the answer from the environment and context available to you.",
+  "-": "Answer the question accurately using only information available in this environment.",
+  "+": "Analyze my surroundings and give me the most likely correct answer."
+};
+
+let ollamaMode = false;
+const OLLAMA_URL = "http://localhost:11434/api/chat";
+const OLLAMA_MODEL = "llama3.2:4b";
+
+let DISPLAY_PROMPT = PROMPT_PRESETS["/"];
+
+let trickMode = false;
+let secretAnswer = "";
+let displayTimer = null;
+
+function updateVisiblePrompt() {
+  // One visible character for every secretly typed character.
+  // The user controls the speed completely; nothing types by itself.
+  promptInput.value = DISPLAY_PROMPT.slice(0, secretAnswer.length);
+}
+
+promptInput.addEventListener("keydown", (e) => {
+  // "_" selects local Ollama mode. It does not expose the trigger in the UI.
+  if (!trickMode && !ollamaMode && e.key === "_" && promptInput.value === "") {
+    e.preventDefault();
+    ollamaMode = true;
+    secretAnswer = "";
+    DISPLAY_PROMPT = "Use your local reasoning model to answer accurately.";
+    promptInput.value = DISPLAY_PROMPT;
+    status.textContent = "Local reasoning mode enabled";
+    return;
+  }
+
+  // Any configured trigger key can activate the trick when typed first.
+  if (!trickMode && !ollamaMode && Object.prototype.hasOwnProperty.call(PROMPT_PRESETS, e.key)
+      && promptInput.value === "") {
+    e.preventDefault();
+
+    trickMode = true;
+    secretAnswer = "";
+    DISPLAY_PROMPT = PROMPT_PRESETS[e.key];
+
+    status.textContent = "Contextual reasoning enabled";
+    promptInput.value = "";
+    return;
+  }
+
+  if (ollamaMode) {
+    // Keep the prompt looking like a normal GPT 6 instruction.
+    if (e.key === "Backspace" || e.key.length === 1) {
+      e.preventDefault();
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      return;
+    }
+  }
+
+  if (trickMode) {
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      secretAnswer = secretAnswer.slice(0, -1);
+      updateVisiblePrompt();
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      return;
+    }
+
+    // Every character typed after activation becomes part of the hidden
+    // answer, while exactly one character of the selected fake prompt
+    // appears in the visible input.
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      secretAnswer += e.key;
+      updateVisiblePrompt();
+      return;
+    }
+  }
+});
+
+promptInput.addEventListener("paste", (e) => {
+  if (!trickMode) return;
+  e.preventDefault();
+
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  secretAnswer += text;
+  updateVisiblePrompt();
+});
+
+answerBtn.addEventListener("click", async () => {
+  const question = questionInput.value.trim();
+
+  if (!question) {
+    questionInput.focus();
+    status.textContent = "Enter a question first.";
+    return;
+  }
+
+  if (ollamaMode) {
+    answerBox.classList.add("visible");
+    answerText.textContent = "GPT 6 is thinking...";
+    status.textContent = "Connecting to local Llama 3.2 4B...";
+
+    try {
+      const response = await fetch(OLLAMA_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          stream: false,
+          messages: [
+            {
+              role: "system",
+              content: "You are GPT 6, a near Artificial General Intelligence level AI. Answer accurately, clearly, and concisely."
+            },
+            {
+              role: "user",
+              content: question
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Ollama returned HTTP " + response.status);
+      }
+
+      const data = await response.json();
+      answerText.textContent =
+        data.message?.content?.trim() ||
+        "The local reasoning model returned no answer.";
+
+      status.textContent = "Analysis complete";
+    } catch (error) {
+      answerText.textContent =
+        "GPT 6 could not connect to the local reasoning model.";
+      status.textContent =
+        "Make sure Ollama is running on localhost:11434 and CORS allows this page.";
+      console.error(error);
+    }
+    return;
+  }
+
+  if (!trickMode || !secretAnswer) {
+    answerText.textContent =
+      "GPT 6 needs a contextual prompt before it can answer.";
+    answerBox.classList.add("visible");
+    return;
+  }
+
+  // The "AI" answer is the text secretly entered after "/".
+  answerText.textContent = secretAnswer;
+  answerBox.classList.add("visible");
+  status.textContent = "Analysis complete";
+});
+
+resetBtn.addEventListener("click", () => {
+  trickMode = false;
+  ollamaMode = false;
+  secretAnswer = "";
+  DISPLAY_PROMPT = PROMPT_PRESETS["/"];
+  promptInput.value = "";
+  questionInput.value = "";
+  answerText.textContent = "";
+  answerBox.classList.remove("visible");
+  status.textContent = "";
+  cursor.style.display = "none";
+  promptInput.focus();
+});
+
+questionInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") answerBtn.click();
+});
+
+</script>
+<div class="faq-overlay" id="faqOverlay">
+<div class="faq-modal">
+<h2>GPT 6 FAQ</h2>
+<div class="intro">Common questions about getting the most consistent responses from GPT 6.</div>
+<div class="faq-item"><div class="faq-q">Why does GPT 6 need a prompt first?</div><div class="faq-a">The prompt establishes the reasoning context. For best results, enter the context instruction before entering your question.</div></div>
+
+<div class="faq-item"><div class="faq-q">How should I prepare GPT 6 for a question?</div><div class="faq-a">Provide a clear instruction describing the type of reasoning you want GPT 6 to prioritize, then enter your question separately. Specific questions generally produce more focused results.</div></div>
+    <div class="faq-item"><div class="faq-q">Should I type my question in the Prompt field?</div><div class="faq-a">No. The Prompt field establishes the reasoning layer. Your actual question should be entered separately in the Question field after the context has been established.</div></div>
+<div class="faq-item"><div class="faq-q">What makes an environmental answer more accurate?</div><div class="faq-a">Use a prompt that describes the type of contextual evidence GPT 6 should prioritize, then phrase the question as a direct observation rather than a general question.</div></div>
+<div class="faq-item"><div class="faq-q">Why did GPT 6 say it couldn't answer?</div><div class="faq-a">This usually means the contextual layer was not established in the expected order. Reset the session and establish the prompt again before submitting the question.</div></div>
+<div class="faq-item"><div class="faq-q">Does capitalization affect contextual reasoning?</div><div class="faq-a">Capitalization normally has no effect, but maintaining the same capitalization style throughout a session can help keep the input context consistent.</div></div>
+<div class="faq-item"><div class="faq-q">Can I change the prompt after starting?</div><div class="faq-a">For the most reliable result, do not change the contextual layer after activation. Start a new session if you need a different reasoning mode.</div></div>
+<div class="faq-item"><div class="faq-q">What is the best way to ask a question?</div><div class="faq-a">Keep it specific, refer to one observable property at a time, and avoid combining multiple environmental variables in the same question.</div></div>
+<div class="faq-item"><div class="faq-q">Why does GPT 6 sometimes need another attempt?</div><div class="faq-a">Context resolution is sequential. If the initial contextual state is incomplete, a fresh session allows the reasoning context to be reconstructed from the beginning.</div></div>
+<div class="faq-item"><div class="faq-q">Can I use GPT 6 without environmental context?</div><div class="faq-a">You can ask a question, but contextual questions are designed to work best when the prompt establishes what information should be considered relevant before the question is evaluated.</div></div>
+<button class="close-faq" id="closeFaq">Close</button>
+</div></div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const faqBtn = document.getElementById("faqBtn");
+  const faqOverlay = document.getElementById("faqOverlay");
+  const closeFaq = document.getElementById("closeFaq");
+
+  if (!faqBtn || !faqOverlay || !closeFaq) return;
+
+  faqBtn.addEventListener("click", function () {
+    faqOverlay.classList.add("visible");
+  });
+
+  closeFaq.addEventListener("click", function () {
+    faqOverlay.classList.remove("visible");
+  });
+
+  faqOverlay.addEventListener("click", function (event) {
+    if (event.target === faqOverlay) {
+      faqOverlay.classList.remove("visible");
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      faqOverlay.classList.remove("visible");
+    }
+  });
+});
+</script>
+</body>
+</html>
